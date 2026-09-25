@@ -34,6 +34,7 @@ layout, animation, responsive behavior, accessibility — MUST use the vendored
 | `docs/`       | GENERATED  | VitePress build output — **never hand-edit**                     |
 | `docs-src/`   | source     | VitePress markdown content (`base: '/docs/'`)                    |
 | `brand/`      | source     | canonical brand artifacts, mirrored from `prioricode/branding/`  |
+| `black-logo/`, `white-logo/` | source | official Prioritech logo exports (dark-on-light / light-on-dark lockups) — reference material for future work |
 | `404.html`    | source     | branded not-found page                                           |
 | `install`, `install.ps1` | source (mirrored) | installers served at the domain root — see runbook       |
 | `CNAME`       | keep       | the custom domain; do not touch                                  |
@@ -60,6 +61,28 @@ Commit source and its generated output in the **same commit**.
 5. **Block wordmark:** `landing/src/wordmark.ts` mirrors the `big` array in
    `prioricode/packages/tui/src/logo.ts` (CLI source of truth). Re-mirror when
    the TUI art changes; keep the provenance comment.
+
+## Design identity — "Warm Night Terminal"
+
+The site's own vibe. Every frontend change must fit it:
+
+1. **Warm night, not cold black.** Layered charcoals (`#131211 → #2d2c2c`), cream ink
+   (`#f6f5f0`) — never pure white/black. Gold (`#F9B110`) is the *only* accent and it is
+   sacred: stars, CTAs, key highlights. Nothing else gets gold.
+2. **The star is the protagonist.** The Prioritech mark is a shooting star (4-point star +
+   arcing swoosh tail). The canvas starfield (`landing/src/Starfield.tsx`) is the living
+   logo: quiet ambient drift, rare falling stars, and a slow "hero" star rising along the
+   swoosh vector trailing sparks. Motion is punctuation, not decoration.
+3. **Terminal as material.** Monospace everywhere (JetBrains Mono), `//` comment kickers,
+   lowercase section titles, hairline TUI-style frames, `>` prompts, blinking caret, gold
+   `::selection`. The site must feel like the CLI's sibling, not its marketing dept.
+4. **Motion as ritual (one-time, then stillness).** Mirror the TUI home screen: reveals
+   play once on scroll-in, the wordmark glints once, the demo terminal types once and
+   holds. No looping gradients, no bouncing/pulsing elements, no shimmer while idle.
+   `prefers-reduced-motion` renders a composed static frame — always.
+5. **Voice: dry, confident, commit-message short.** Imperative sentences. Indonesian pride
+   ("progress. precision. priority."). Light terminal humor, zero corporate filler.
+   No emoji icons (SVG only), no exclamation marks in headlines.
 
 ## Hard constraints
 

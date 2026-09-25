@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { motion, useReducedMotion } from "motion/react"
 import { ascii, Mark, tone } from "./brand"
 import { wordmark } from "./wordmark"
+import { Starfield } from "./Starfield"
 
 const GITHUB = "https://github.com/Prioritech-Indonesia-Optima/prioricode"
 const DOCS = "/docs/"
@@ -20,6 +21,8 @@ function useTheme() {
   }, [theme])
   return [theme, () => setTheme((t) => (t === "dark" ? "light" : "dark"))] as const
 }
+
+/* ------------------------------------------------------------- brand art -- */
 
 function AsciiLogo() {
   return (
@@ -40,13 +43,177 @@ function AsciiLogo() {
 
 function Wordmark({ reduced }: { reduced: boolean }) {
   return (
-    <div className="relative">
-      <pre className="wordmark" aria-hidden="true" style={reduced ? { animation: "none" } : undefined}>
-        {wordmark.join("\n")}
-      </pre>
+    <pre className="wordmark" aria-hidden="true" style={reduced ? { animation: "none" } : undefined}>
+      {wordmark.join("\n")}
+    </pre>
+  )
+}
+
+/* ---------------------------------------------------------- typed cycle -- */
+
+const PHRASES = ["reads your codebase.", "runs your tools.", "ships your code.", "asks before touching prod."]
+
+function CyclingLine({ reduced }: { reduced: boolean }) {
+  const [text, setText] = useState(reduced ? PHRASES[0] : "")
+  const state = useRef({ phrase: 0, len: 0, mode: "type" as "type" | "hold" | "del" })
+  useEffect(() => {
+    if (reduced) return
+    let timer: ReturnType<typeof setTimeout>
+    const tick = () => {
+      const s = state.current
+      const full = PHRASES[s.phrase]
+      if (s.mode === "type") {
+        s.len++
+        if (s.len >= full.length) {
+          s.mode = "hold"
+          timer = setTimeout(tick, 2300)
+        } else {
+          timer = setTimeout(tick, 42 + Math.random() * 46)
+        }
+      } else if (s.mode === "hold") {
+        s.mode = "del"
+        timer = setTimeout(tick, 0)
+      } else {
+        s.len--
+        if (s.len <= 0) {
+          s.phrase = (s.phrase + 1) % PHRASES.length
+          s.mode = "type"
+          timer = setTimeout(tick, 320)
+        } else {
+          timer = setTimeout(tick, 18)
+        }
+      }
+      setText(full.slice(0, s.len))
+    }
+    timer = setTimeout(tick, 900)
+    return () => clearTimeout(timer)
+  }, [reduced])
+  return (
+    <p className="mt-3 min-h-[1.7em] text-[clamp(0.95rem,2.4vw,1.15rem)] text-[var(--ink-muted)]" aria-hidden="true">
+      <span className="t-prompt">&gt; </span>
+      it {text}
+      {!reduced && <span className="caret" />}
+    </p>
+  )
+}
+
+/* -------------------------------------------------------- live terminal -- */
+
+type TermLine = { kind: "cmd" | "prompt" | "dim" | "ok" | "done"; text: string }
+const SESSION: TermLine[] = [
+  { kind: "cmd", text: "prioricode" },
+  { kind: "dim", text: "build agent · tab for plan · /help" },
+  { kind: "prompt", text: "refactor the auth middleware to JWT — keep tests green" },
+  { kind: "dim", text: "◆ search  src/                8 files" },
+  { kind: "dim", text: "◆ read    src/middleware/auth.ts" },
+  { kind: "dim", text: "◆ edit    src/middleware/auth.ts     +24 −11" },
+  { kind: "dim", text: "◆ bash    bun test middleware" },
+  { kind: "ok", text: "✓ 14 passed" },
+  { kind: "done", text: "done in 38s · review the diff? [y/n]" },
+]
+
+function LiveTerminal({ reduced }: { reduced: boolean }) {
+  const [li, setLi] = useState(reduced ? SESSION.length : 0)
+  const [ci, setCis] = useState(0)
+  useEffect(() => {
+    if (reduced) return
+    let timer: ReturnType<typeof setTimeout>
+    if (li >= SESSION.length) {
+      timer = setTimeout(() => {
+        setLi(0)
+        setCis(0)
+      }, 7000)
+    } else {
+      const line = SESSION[li]
+      const typed = line.kind === "cmd" || line.kind === "prompt"
+      if (typed && ci < line.text.length) {
+        timer = setTimeout(() => setCis(ci + 1), line.kind === "cmd" ? 70 : 26 + Math.random() * 30)
+      } else {
+        timer = setTimeout(() => {
+          setCis(0)
+          setLi(li + 1)
+        }, typed ? 420 : 260 + Math.random() * 260)
+      }
+    }
+    return () => clearTimeout(timer)
+  }, [li, ci, reduced])
+  const shown = reduced ? SESSION : SESSION.slice(0, Math.min(li + 1, SESSION.length))
+  return (
+    <div className="term mx-auto max-w-3xl">
+      <div className="term-bar">
+        <span className="dot" />
+        <span className="dot" />
+        <span className="dot" />
+        <span className="ml-2 text-[0.68rem] text-[var(--ink-faint)]">prioricode — build agent</span>
+      </div>
+      <div className="term-body">
+        {shown.map((line, i) => {
+          const isCurrent = i === li && !reduced
+          const typed = line.kind === "cmd" || line.kind === "prompt"
+          const text = typed && isCurrent ? line.text.slice(0, ci) : line.text
+          const cls =
+            line.kind === "dim"
+              ? "t-dim"
+              : line.kind === "ok"
+                ? "t-ok"
+                : line.kind === "done"
+                  ? "t-ok"
+                  : "text-[var(--ink)]"
+          return (
+            <div key={i} className={cls}>
+              {line.kind === "cmd" && <span className="t-prompt">$ </span>}
+              {line.kind === "prompt" && <span className="t-prompt">❯ </span>}
+              {text}
+              {typed && isCurrent && <span className="caret" />}
+              {line.kind === "done" && (ci === 0 || reduced) && <span className="caret" />}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
+
+/* --------------------------------------------------------------- ticker -- */
+
+const TICKER = [
+  "v0.1.9 shipped",
+  "terminal-native",
+  "build ⇄ plan agents",
+  "cross-session coordination",
+  "model-agnostic",
+  "bring your own keys",
+  "open source",
+  "x64 · arm · baseline",
+  "made in jakarta",
+  "progress. precision. priority.",
+]
+
+function StarSep() {
+  return (
+    <svg viewBox="0 0 16 16" className="mx-1 inline-block h-2.5 w-2.5 align-middle text-[var(--gold)]" aria-hidden="true">
+      <path fill="currentColor" d="M8 0q0 6 8 8q-8 0-8 8q0-8-8-8q8 0 8-8Z" />
+    </svg>
+  )
+}
+
+function Ticker() {
+  const items = [...TICKER, ...TICKER]
+  return (
+    <div className="ticker" aria-hidden="true">
+      <div className="ticker-track">
+        {items.map((item, i) => (
+          <span className="ticker-item" key={i}>
+            <StarSep />
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------- widgets -- */
 
 function Install() {
   const [target, setTarget] = useState<"sh" | "ps">(() =>
@@ -72,7 +239,7 @@ function Install() {
                 : "border-[var(--line)] bg-[var(--surface)] text-[var(--ink-muted)] hover:border-[var(--line-strong)]")
             }
           >
-            {t === "sh" ? "macOS & Linux" : "Windows"}
+            {t === "sh" ? "macos & linux" : "windows"}
           </button>
         ))}
       </div>
@@ -95,12 +262,11 @@ function Install() {
             } catch {}
           }}
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? "copied" : "copy"}
         </button>
       </div>
       <p className="mt-2 text-[0.72rem] text-[var(--ink-faint)]">
-        Installs the latest release for your platform (x64 & ARM). Pin a version with{" "}
-        <code className="text-[var(--gold)]">-- --version X.Y.Z</code>.
+        installs the latest release — x64 & arm. pin a version with <code className="text-[var(--gold)]">-- --version X.Y.Z</code>.
       </p>
     </div>
   )
@@ -125,10 +291,12 @@ function Version() {
   )
 }
 
+/* ------------------------------------------------------------- features -- */
+
 const FEATURES: { title: string; body: string; icon: ReactNode }[] = [
   {
-    title: "Terminal-native",
-    body: "Runs where you work. No context switch, no IDE lock-in — just a conversation that writes real code.",
+    title: "lives in your shell",
+    body: "No IDE to open, no tab to lose. Type `prioricode` anywhere you already work — macOS, Linux, Windows, x64 and ARM.",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <rect x="1.5" y="2.5" width="13" height="11" rx="2" />
@@ -137,8 +305,8 @@ const FEATURES: { title: string; body: string; icon: ReactNode }[] = [
     ),
   },
   {
-    title: "Two agents, one Tab",
-    body: "Switch between build (full access) and plan (read-only analysis & exploration) mid-session with Tab.",
+    title: "two agents, one Tab",
+    body: "build ships it. plan reads the room first. flip mid-thought with Tab — no mode anxiety, no restart.",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M2 5.5h9l-2.2-2.2M14 10.5H5l2.2 2.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -146,8 +314,8 @@ const FEATURES: { title: string; body: string; icon: ReactNode }[] = [
     ),
   },
   {
-    title: "Cross-session coordination",
-    body: "Run several agents on one project. They share presence, notes, and claims through a durable channel — no stomping.",
+    title: "a room full of agents",
+    body: "Run several sessions on one repo. They announce themselves, claim files, and pass notes through a durable channel — nobody stomps on anyone's diff.",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="3.5" cy="3.5" r="1.7" />
@@ -158,8 +326,8 @@ const FEATURES: { title: string; body: string; icon: ReactNode }[] = [
     ),
   },
   {
-    title: "Model-agnostic",
-    body: "Switch providers and models per session. Your agent, your keys, no lock-in to any single lab.",
+    title: "bring your own brain",
+    body: "Anthropic, OpenAI, Google — or the 7B humming on your desk. Providers and models switch per session. Your keys, your context.",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="8" cy="8" r="6.5" />
@@ -168,8 +336,8 @@ const FEATURES: { title: string; body: string; icon: ReactNode }[] = [
     ),
   },
   {
-    title: "Open source",
-    body: "Fully transparent agent, tools, and context engine. Read it, fork it, ship it — auditable to the last prompt.",
+    title: "nothing hidden",
+    body: "The agent, the tools, the context engine — all readable, all forkable. Audit the last prompt if you want. We'd like you to.",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M8 1.5 2 4.5v4c0 3 2.5 5.3 6 6 3.5-.7 6-3 6-6v-4L8 1.5Z" strokeLinejoin="round" />
@@ -178,8 +346,8 @@ const FEATURES: { title: string; body: string; icon: ReactNode }[] = [
     ),
   },
   {
-    title: "Built in Jakarta",
-    body: "Crafted by Prioritech Indonesia Optima — progress, precision, priority. Shipped daily, in the open.",
+    title: "progress. precision. priority.",
+    body: "Built by Prioritech in Jakarta and shipped daily, in the open. The star in the logo isn't decoration — it's the whole idea.",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M8 14.5s5.5-4.6 5.5-8A5.5 5.5 0 0 0 2.5 6.5c0 3.4 5.5 8 5.5 8Z" strokeLinejoin="round" />
@@ -189,54 +357,55 @@ const FEATURES: { title: string; body: string; icon: ReactNode }[] = [
   },
 ]
 
-const TERM_LINES: { cls: string; text: string }[] = [
-  { cls: "", text: "$ prioricode" },
-  { cls: "t-dim", text: "build agent · press Tab for plan mode" },
-  { cls: "", text: "❯ refactor the auth middleware to JWT — keep tests green" },
-  { cls: "t-dim", text: "◆ search  src/                 8 files" },
-  { cls: "t-dim", text: "◆ read    src/middleware/auth.ts" },
-  { cls: "t-dim", text: "◆ edit    src/middleware/auth.ts     +24 −11" },
-  { cls: "t-dim", text: "◆ bash    bun test middleware" },
-  { cls: "t-ok", text: "✓ 14 passed — done in 38s · review the diff? [y/n]" },
-]
-
 const FAQS: { q: string; a: ReactNode }[] = [
   {
-    q: "What exactly is PrioriCode?",
-    a: "An open source AI coding agent that lives in your terminal. It reads your codebase, edits files, runs your tools (tests, builds, git) and works until the task is verified — install it with one command.",
+    q: "what is PrioriCode, exactly",
+    a: "An open source AI coding agent that lives in your terminal. It reads your codebase, edits files, runs your tests and builds, and keeps going until the work is verified — one conversation at a time.",
   },
   {
-    q: "Which models does it use?",
-    a: "Whichever you want. Providers and models are switchable per session, with your own keys — no lock-in to any single lab.",
-  },
-  {
-    q: "What are build and plan agents?",
+    q: "which models does it run on",
     a: (
       <>
-        Two built-in agents you switch between with <kbd className="text-[var(--gold)]">Tab</kbd>:{" "}
-        <strong className="text-[var(--ink)]">build</strong> has full access for development work,{" "}
-        <strong className="text-[var(--ink)]">plan</strong> is read-only for analysis and code exploration.
+        Whichever you point it at. Anthropic, OpenAI, Google, local endpoints — switch providers and models per session. The agent is free;{" "}
+        <a href="https://prioritech.co.id">your keys are yours</a>.
       </>
     ),
   },
   {
-    q: "Can several agents work on one project at once?",
-    a: "Yes — concurrent sessions coordinate through a durable cross-process channel: presence, file claims, and message passing so parallel agents don't collide.",
-  },
-  {
-    q: "Which platforms are supported?",
+    q: "what are build and plan",
     a: (
       <>
-        macOS and Linux via the bash installer, Windows via PowerShell — x64 and ARM, baseline builds included. Grab it with the one-liners above, then{" "}
-        <a href={DOCS}>get started</a>.
+        Two agents, one <kbd className="text-[var(--gold)]">Tab</kbd> key. <strong className="text-[var(--ink)]">build</strong> has full
+        access and ships work. <strong className="text-[var(--ink)]">plan</strong> is read-only: it explores, explains, and drafts a plan
+        before anything gets touched. Serious change? plan first.
       </>
     ),
   },
   {
-    q: "Is it free?",
-    a: "Yes. PrioriCode is free and open source — the agent, tools, and context engine are all readable on GitHub. Bring your own model keys.",
+    q: "can several agents work on one repo",
+    a: "Yes — that's the point of the coordination channel. Concurrent sessions share presence, claim files before editing, and message each other. It's a room, not a race.",
+  },
+  {
+    q: "which platforms",
+    a: (
+      <>
+        macOS and Linux via one bash command, Windows via PowerShell. x64 and ARM, baseline builds included. The one-liners are up top; binaries live on{" "}
+        <a href={`${GITHUB}/releases`}>GitHub releases</a>.
+      </>
+    ),
+  },
+  {
+    q: "is it free",
+    a: (
+      <>
+        Free and open source — agent, tools, context engine, all of it on{" "}
+        <a href={GITHUB}>GitHub</a>. Read it, fork it, ship it. The star is a promise, not a paywall.
+      </>
+    ),
   },
 ]
+
+/* ------------------------------------------------------------------ app -- */
 
 export function App() {
   const [theme, flip] = useTheme()
@@ -255,21 +424,8 @@ export function App() {
     <>
       <h1 className="sr-only">PrioriCode — the open source AI coding agent by Prioritech</h1>
 
-      <div className="backdrop" aria-hidden="true">
-        <svg className="comet" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <linearGradient id="cometGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#f9b110" stopOpacity="0" />
-              <stop offset="0.55" stopColor="#f9b110" stopOpacity="0.5" />
-              <stop offset="1" stopColor="#ffc94a" stopOpacity="0.9" />
-            </linearGradient>
-          </defs>
-          <path className="trail" d="M-40 60 C 380 140, 620 260, 830 520 C 880 585, 915 640, 940 700" />
-          <path
-            className="spark"
-            d="M940 668 L948 692 L972 700 L948 708 L940 732 L932 708 L908 700 L932 692 Z"
-          />
-        </svg>
+      <div className="backdrop">
+        <Starfield />
       </div>
 
       <header className="site-header">
@@ -282,16 +438,16 @@ export function App() {
           </a>
           <nav className="flex items-center gap-1.5 text-[0.78rem] flex-wrap">
             <a className="navlink px-2 py-2" href={DOCS}>
-              Docs
+              docs
             </a>
             <a className="navlink px-2 py-2" href={`${GITHUB}/releases`}>
-              Releases
+              releases
             </a>
             <a className="navlink px-2 py-2" href={GITHUB}>
-              GitHub
+              github
             </a>
             <a className="navlink hidden px-2 py-2 sm:inline" href="https://prioritech.co.id">
-              Prioritech
+              prioritech
             </a>
             <button
               className="grid h-11 w-11 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--ink-muted)] hover:border-[var(--line-strong)] hover:text-[var(--ink)] cursor-pointer"
@@ -318,27 +474,24 @@ export function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-5">
+      <main>
         {/* ------------------------------------------------------------ hero */}
-        <section className="pt-10 pb-14 sm:pt-16">
+        <section className="mx-auto max-w-6xl px-5 pt-10 pb-10 sm:pt-14">
           <Wordmark reduced={reduced} />
           <div className="mt-10 grid items-start gap-10 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-[0.68rem] uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold)]" aria-hidden="true" />
-                Open source · Built in Jakarta
-              </span>
-              <p className="mt-4 text-[clamp(1.5rem,4vw,2.3rem)] font-bold leading-[1.15] tracking-tight">
-                Code at the speed of a{" "}
-                <span className="text-[var(--gold)]">shooting star.</span>
-              </p>
+              <p className="kicker">open source · jakarta · progress. precision. priority.</p>
+              <h2 className="mt-4 text-[clamp(1.5rem,4vw,2.3rem)] font-bold leading-[1.15] tracking-tight">
+                Your terminal just got <span className="text-[var(--gold)]">ambitious.</span>
+              </h2>
+              <CyclingLine reduced={reduced} />
               <p className="mt-4 max-w-prose text-[0.88rem] leading-relaxed text-[var(--ink-muted)]">
                 PrioriCode is the open source AI coding agent by{" "}
                 <a className="text-[var(--gold)] hover:underline underline-offset-4" href="https://prioritech.co.id">
                   Prioritech
                 </a>
-                . One command installs it into your terminal — it reads your codebase, runs your tools, and ships
-                your code.
+                . One command in, and your shell gets a partner that reads the repo, writes the diff, and proves it
+                with tests.
               </p>
               <div className="mt-7">
                 <Install />
@@ -348,52 +501,46 @@ export function App() {
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden="true">
                     <path d="M8 1a.75.75 0 0 1 .75.75v6.44l1.97-1.97a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 1.06-1.06l1.97 1.97V1.75A.75.75 0 0 1 8 1ZM2 13.25A.75.75 0 0 1 2.75 12.5h10.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" />
                   </svg>
-                  Download latest
+                  download latest
                 </a>
                 <a className="btn" href={DOCS}>
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4" aria-hidden="true">
                     <path d="M2.5 2.5h4.2c1.4 0 1.8 1 1.8 2.2V13c0-1 .5-1.7 1.7-1.7h3.3V2.5H8.9" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M2.5 2.5v9.5c0-.7.7-1.2 1.6-1.2h4.4" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  Read the docs
+                  read the docs
                 </a>
                 <a className="btn" href={GITHUB}>
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden="true">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.53.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .75-.24 2.48.92a6.9 6.9 0 0 1 2.27-.3c.77 0 1.54.2 2.27.6 1.72-1.16 2.48-.92 2.48-.92.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
                   </svg>
-                  Star on GitHub
+                  star on github
                 </a>
               </div>
             </div>
             <div className="hidden items-center justify-center lg:flex" aria-hidden="true">
-              <AsciiLogo />
+              <div>
+                <AsciiLogo />
+                <p className="kicker mt-4 text-center">the mark, as your terminal draws it</p>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* -------------------------------------------------------- terminal */}
-        <section className="py-14" aria-label="PrioriCode in action">
+        {/* ---------------------------------------------------------- ticker */}
+        <Ticker />
+
+        {/* -------------------------------------------------------- session */}
+        <section className="mx-auto max-w-6xl px-5 py-14" aria-label="PrioriCode in action">
           <motion.div {...fade()}>
-            <div className="term mx-auto max-w-3xl">
-              <div className="term-bar">
-                <span className="dot" />
-                <span className="dot" />
-                <span className="dot" />
-                <span className="ml-2 text-[0.68rem] text-[var(--ink-faint)]">prioricode — build agent</span>
-              </div>
-              <div className="term-body">
-                {TERM_LINES.map((line, i) => (
-                  <div key={i} className={line.cls + (line.cls === "" ? " text-[var(--ink)]" : "")}>
-                    {line.text}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <p className="kicker text-center mb-6">a session, start to ship</p>
+            <LiveTerminal reduced={reduced} />
           </motion.div>
         </section>
 
         {/* -------------------------------------------------------- features */}
-        <section id="features" className="py-14" aria-label="Features">
+        <section id="features" className="mx-auto max-w-6xl px-5 py-14" aria-label="Features">
+          <p className="kicker text-center mb-4">why prioricode</p>
           <motion.h2 {...fade()} className="text-center text-[clamp(1.25rem,3vw,1.7rem)] font-bold tracking-tight">
             Everything you expect from an agent.{" "}
             <span className="text-[var(--gold)]">Nothing you have to trust blindly.</span>
@@ -401,6 +548,7 @@ export function App() {
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f, i) => (
               <motion.div key={f.title} {...fade(0.05 * (i % 3))} className="card p-5">
+                <span className="idx">{String(i + 1).padStart(2, "0")}</span>
                 <div className="icon">{f.icon}</div>
                 <h3 className="mt-3.5 text-[0.92rem] font-bold">{f.title}</h3>
                 <p className="mt-1.5 text-[0.78rem] leading-relaxed text-[var(--ink-muted)]">{f.body}</p>
@@ -410,39 +558,48 @@ export function App() {
         </section>
 
         {/* ------------------------------------------------------------ docs */}
-        <section className="py-14" aria-label="Documentation">
+        <section className="mx-auto max-w-6xl px-5 py-14" aria-label="Documentation">
           <motion.div {...fade()} className="card grid gap-6 p-7 sm:grid-cols-[1.4fr_1fr] sm:items-center sm:p-9">
             <div>
+              <p className="kicker mb-3">docs</p>
               <h2 className="text-[clamp(1.15rem,3vw,1.5rem)] font-bold tracking-tight">
-                Docs that start at <span className="text-[var(--gold)]">one command</span>
+                The docs live <span className="text-[var(--gold)]">right here.</span>
               </h2>
               <p className="mt-2.5 text-[0.83rem] leading-relaxed text-[var(--ink-muted)]">
-                Quickstart, agents and tools, configuration, permission rules, and the SDK reference — all served
-                from this site, with offline search.
+                Quickstart, agents, configuration, permission rules, the SDK — on this site. No account, no cookie
+                wall, and search works offline. Two minutes from zero to your first shipped change.
               </p>
             </div>
             <div className="flex flex-wrap gap-2.5 sm:justify-end">
               <a className="btn primary" href={DOCS}>
-                Open the docs
+                open the docs
               </a>
               <a className="btn" href={`${DOCS}quickstart.html`}>
-                Quickstart
+                quickstart
               </a>
             </div>
           </motion.div>
         </section>
 
         {/* ------------------------------------------------------------- faq */}
-        <section id="faq" className="py-14" aria-label="Frequently asked questions">
+        <section id="faq" className="mx-auto max-w-6xl px-5 py-14" aria-label="Frequently asked questions">
+          <p className="kicker text-center mb-4">faq</p>
           <motion.h2 {...fade()} className="text-center text-[clamp(1.25rem,3vw,1.7rem)] font-bold tracking-tight">
-            Questions, answered fast.
+            Questions, answered like a developer.
           </motion.h2>
           <div className="mx-auto mt-8 grid max-w-3xl gap-3">
             {FAQS.map((f, i) => (
               <motion.details key={f.q} {...fade(0.04 * i)} className="faq" open={i === 0 ? true : undefined}>
                 <summary>
                   {f.q}
-                  <svg viewBox="0 0 16 16" className="chev h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 16 16"
+                    className="chev h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    aria-hidden="true"
+                  >
                     <path d="M8 3v10M3 8h10" strokeLinecap="round" />
                   </svg>
                 </summary>
@@ -456,13 +613,17 @@ export function App() {
       <footer className="border-t border-[var(--line)]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-7 text-[0.72rem] text-[var(--ink-faint)]">
           <span>
-            © {new Date().getFullYear()} PT Prioritech Indonesia Optima ·{" "}
-            <a className="text-[var(--ink-muted)] hover:text-[var(--gold)] transition-colors" href="https://prioritech.co.id">
-              prioritech.co.id
-            </a>{" "}
+            © {new Date().getFullYear()} PT Prioritech Indonesia Optima · Jakarta ·{" "}
+            <span className="text-[var(--ink-muted)]">
+              progress. precision. <span className="text-[var(--gold)]">priority.</span>
+            </span>{" "}
             ·{" "}
             <a className="text-[var(--ink-muted)] hover:text-[var(--gold)] transition-colors" href={DOCS}>
               docs
+            </a>{" "}
+            ·{" "}
+            <a className="text-[var(--ink-muted)] hover:text-[var(--gold)] transition-colors" href="https://prioritech.co.id">
+              prioritech.co.id
             </a>
           </span>
           <Version />

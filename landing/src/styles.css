@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
-/* ---------------------------------------------------------------- tokens -- */
+/* ============================================================ Warm Night
+   Terminal tokens — charcoal night, cream ink, one sacred gold. Mirrors the
+   TUI palette (see AGENTS.md design identity). */
+
 :root,
 [data-theme="dark"] {
   --bg: #1a1917;
@@ -58,6 +61,31 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+::selection {
+  background: var(--gold);
+  color: var(--gold-ink);
+}
+
+/* terminal-flavored scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-raised) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-raised);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--gold) 45%, var(--surface-raised));
+  background-clip: content-box;
+}
+
 section[id] {
   scroll-margin-top: 5rem;
 }
@@ -80,7 +108,19 @@ section[id] {
   border: 0;
 }
 
-/* ------------------------------------------------------------- backdrop -- */
+/* // comment kickers — the site's section labels */
+.kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.kicker::before {
+  content: "//";
+  color: var(--gold);
+  margin-right: 0.45em;
+}
+
+/* ------------------------------------------------------- backdrop layer -- */
 .backdrop {
   position: fixed;
   inset: 0;
@@ -96,54 +136,16 @@ section[id] {
     radial-gradient(58rem 36rem at 82% -12%, var(--gold-soft), transparent 62%),
     radial-gradient(46rem 32rem at -8% 108%, var(--gold-soft), transparent 60%);
 }
-.comet {
+.starfield {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.55;
-}
-.comet .trail {
-  fill: none;
-  stroke: url(#cometGrad);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-dasharray: 1400;
-  stroke-dashoffset: 1400;
-  animation: comet-draw 2.4s cubic-bezier(0.3, 0.6, 0.2, 1) 0.3s forwards;
-}
-.comet .spark {
-  fill: var(--gold-bright);
-  opacity: 0;
-  animation: comet-spark 0.5s ease-out 2.5s forwards;
-}
-@keyframes comet-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-@keyframes comet-spark {
-  from {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-  to {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-}
-
-/* ---------------------------------------------------------------- header -- */
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  backdrop-filter: blur(10px);
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  border-bottom: 1px solid var(--line);
 }
 
 /* --------------------------------------------------------- wordmark hero -- */
+/* the color gradient doubles as the glint: it sweeps across the glyphs once,
+   mirroring the TUI home screen (reveal once, glint once, then stillness). */
 .wordmark {
   display: block;
   font-family: inherit;
@@ -155,12 +157,16 @@ section[id] {
   white-space: pre;
   overflow-x: auto;
   max-width: 100%;
-  background: linear-gradient(100deg, var(--gold) 0%, var(--gold-bright) 32%, var(--ink) 68%);
+  background: linear-gradient(100deg, var(--gold) 0%, var(--gold-bright) 12%, var(--ink) 26%, var(--ink) 74%, var(--gold) 88%, var(--gold-bright) 100%);
+  background-size: 260% 100%;
+  background-position: 0% 0;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 0 22px var(--glow));
-  animation: wordmark-reveal 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s both;
+  animation:
+    wordmark-reveal 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s both,
+    wordmark-glint 1.6s cubic-bezier(0.4, 0, 0.2, 1) 1.15s both;
 }
 @keyframes wordmark-reveal {
   from {
@@ -168,6 +174,14 @@ section[id] {
   }
   to {
     clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes wordmark-glint {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
   }
 }
 
@@ -220,6 +234,7 @@ section[id] {
   font-size: 0.78rem;
   line-height: 1.9;
   overflow-x: auto;
+  min-height: 15.5rem;
 }
 .t-prompt {
   color: var(--gold);
@@ -233,9 +248,57 @@ section[id] {
 [data-theme="light"] .t-ok {
   color: #3d7a3d;
 }
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  background: var(--gold);
+  vertical-align: text-bottom;
+  animation: caret-blink 1.06s steps(1) infinite;
+}
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- ticker -- */
+.ticker {
+  overflow: hidden;
+  border-block: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  padding: 0.55rem 0;
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  gap: 0;
+  animation: ticker-run 34s linear infinite;
+}
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+.ticker-item {
+  padding: 0 1.4rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.ticker-item b {
+  color: var(--gold);
+  font-weight: 500;
+}
+@keyframes ticker-run {
+  to {
+    transform: translateX(-50%);
+  }
+}
 
 /* ---------------------------------------------------------------- bento -- */
 .card {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -248,6 +311,17 @@ section[id] {
   border-color: color-mix(in srgb, var(--gold) 55%, var(--line));
   transform: translateY(-2px);
   box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.5);
+}
+.card .idx {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.25rem;
+  font-size: 0.62rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.08em;
+}
+.card:hover .idx {
+  color: var(--gold);
 }
 .card .icon {
   width: 2.1rem;
@@ -282,6 +356,11 @@ details.faq summary {
 details.faq summary::-webkit-details-marker {
   display: none;
 }
+details.faq summary::before {
+  content: ">";
+  color: var(--gold);
+  margin-right: 0.6em;
+}
 details.faq summary .chev {
   flex-shrink: 0;
   transition: transform 200ms ease;
@@ -292,7 +371,7 @@ details.faq[open] summary .chev {
   color: var(--gold);
 }
 details.faq .faq-body {
-  padding: 0 1.1rem 1rem;
+  padding: 0 1.1rem 1rem 2.6rem;
   color: var(--ink-muted);
   font-size: 0.8rem;
   line-height: 1.75;
@@ -367,6 +446,16 @@ a.navlink:hover {
   color: var(--gold);
 }
 
+/* ---------------------------------------------------------------- header -- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+
 /* ------------------------------------------------------------ reduced  -- */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -375,14 +464,13 @@ a.navlink:hover {
   .wordmark {
     animation: none;
     clip-path: none;
+    background-position: 0% 0;
   }
-  .comet .trail {
+  .ticker-track {
     animation: none;
-    stroke-dashoffset: 0;
   }
-  .comet .spark {
+  .caret {
     animation: none;
-    opacity: 0.9;
   }
   .card:hover {
     transform: none;
