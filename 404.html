@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>404 — PrioriCode</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#232220" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" type="image/svg+xml" href="/brand/favicon.svg" />
+    <style>
+      :root {
+        --bg: #232220;
+        --bg-deep: #1a1917;
+        --line: rgba(246, 245, 240, 0.14);
+        --ink: #f6f5f0;
+        --ink-muted: #adaa9c;
+        --gold: #f9b110;
+        --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(60rem 40rem at 85% -10%, rgba(249, 177, 16, 0.08), transparent 60%),
+          var(--bg);
+        color: var(--ink);
+        font-family: var(--mono);
+        display: grid;
+        place-items: center;
+        padding: 2rem 1.25rem;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        width: 100%;
+        max-width: 34rem;
+        text-align: center;
+      }
+      .mark {
+        width: 4rem;
+        height: 4rem;
+      }
+      .code {
+        color: var(--gold);
+        font-size: 1.1rem;
+        letter-spacing: 0.14em;
+        margin: 1.25rem 0 0.35rem;
+      }
+      h1 {
+        margin: 0 0 0.6rem;
+        font-size: clamp(1.5rem, 5vw, 2rem);
+        letter-spacing: -0.02em;
+      }
+      p {
+        color: var(--ink-muted);
+        font-size: 0.9rem;
+        margin: 0 0 1.75rem;
+      }
+      p code {
+        color: var(--gold);
+        background: var(--bg-deep);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 0.1rem 0.4rem;
+      }
+      nav {
+        display: flex;
+        justify-content: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+      nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 0.85rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.55rem 0.9rem;
+        transition:
+          border-color 140ms ease,
+          background 140ms ease;
+      }
+      nav a:hover {
+        border-color: var(--gold);
+        background: rgba(249, 177, 16, 0.14);
+      }
+      nav a.primary {
+        background: var(--gold);
+        color: var(--bg-deep);
+        font-weight: 700;
+        border-color: var(--gold);
+      }
+      nav a.primary:hover {
+        background: #ffc94a;
+        border-color: #ffc94a;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img class="mark" src="/brand/prioritech-mark-light.svg" alt="Prioritech mark" />
+      <div class="code">404</div>
+      <h1>This path doesn't exist (yet)</h1>
+      <p>
+        The page you asked for isn't on <code>code.prioritech.co.id</code>. Head back to the
+        landing page or the docs.
+      </p>
+      <nav>
+        <a class="primary" href="/">Install PrioriCode</a>
+        <a href="/docs/">Docs</a>
+        <a href="https://github.com/Prioritech-Indonesia-Optima/prioricode">GitHub</a>
+      </nav>
+    </main>
+  </body>
+</html>
