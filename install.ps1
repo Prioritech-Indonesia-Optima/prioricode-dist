@@ -17,6 +17,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if (-not $Version -and $env:VERSION) { $Version = $env:VERSION }
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
 $app = "prioricode"
@@ -38,6 +39,12 @@ try {
     Write-Muted "Set PRIORICODE_INSTALL_DIR to a writable directory and retry."
     exit 1
 }
+
+# --- clean up binaries parked by earlier in-place upgrades ---
+# (see the swap logic below: a running exe is renamed to .old / .old.<guid>,
+# and can only be deleted once the process that held it has exited)
+Get-ChildItem -Path $installDir -Filter "$app.exe.old*" -Force -ErrorAction SilentlyContinue |
+    Remove-Item -Force -ErrorAction SilentlyContinue
 
 # --- arch + baseline (AVX2) detection ---
 $arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "x64" }
@@ -82,10 +89,13 @@ if ($Version) {
 $url = "https://github.com/$repo/releases/download/$tag/$filename"
 
 # --- already installed? ---
-$existing = Get-Command $app -ErrorAction SilentlyContinue
-if ($existing) {
+# Compare against the binary in the *target install directory* (what this run
+# would overwrite), not whatever `prioricode` resolves to on PATH — a second
+# copy elsewhere must not make an upgrade silently no-op.
+$installedBin = Join-Path $installDir "$app.exe"
+if (Test-Path $installedBin) {
     try {
-        $installed = (& $existing.Source --version 2>$null | Select-Object -First 1)
+        $installed = (& $installedBin --version 2>$null | Select-Object -First 1)
         if ($installed -and "$installed".Trim() -eq $specificVersion) {
             Write-Muted "Version $specificVersion already installed"
             exit 0
@@ -96,22 +106,104 @@ if ($existing) {
     } catch {}
 }
 
+function Get-RemoteFile {
+    param([string]$Url, [string]$Out)
+    $curlCmd = Get-Command curl.exe -ErrorAction SilentlyContinue
+    if ($curlCmd) {
+        & $curlCmd.Source -sSL --fail --retry 10 --retry-delay 2 --retry-all-errors --continue-at - -o $Out $Url
+        if ($LASTEXITCODE -ne 0) { throw "download failed with exit code $LASTEXITCODE" }
+        return
+    }
+    for ($i = 1; $i -le 5; $i++) {
+        try {
+            Invoke-WebRequest -Uri $Url -OutFile $Out -UseBasicParsing
+            return
+        } catch {
+            if ($i -eq 5) { throw }
+            Start-Sleep -Seconds 2
+        }
+    }
+}
+
+# Replaces the installed binary even when it is the image of a currently
+# running process. Windows locks a running executable against overwrite and
+# delete, but the image section is opened with FILE_SHARE_DELETE, so renaming
+# the running file IS allowed: park the old copy under a .old name, move the
+# new one into place, then best-effort delete the parked copy (it only
+# disappears once the old process exits; the sweep at the top of the next run
+# catches stragglers). This is what makes `prioricode upgrade` work on
+# Windows at all: the installer always runs from inside the old binary.
+function Install-Executable {
+    param([string]$Source, [string]$Target)
+    if (-not (Test-Path $Target)) {
+        Move-Item -Path $Source -Destination $Target
+        return
+    }
+    try {
+        Move-Item -Force -Path $Source -Destination $Target
+        return
+    } catch {
+        # expected while the target is the running image: fall through
+    }
+    $leaf = Split-Path -Leaf $Target
+    $dir = Split-Path -Parent $Target
+    $parkedName = "$leaf.old"
+    try {
+        Rename-Item -Path $Target -NewName $parkedName -Force
+    } catch {
+        # A parked copy from an earlier upgrade can sit in Windows'
+        # delete-pending state (its name stays reserved until the process that
+        # ran it exits), so a second self-upgrade must not collide with it.
+        $parkedName = "$leaf.old.$([guid]::NewGuid().ToString('N'))"
+        Rename-Item -Path $Target -NewName $parkedName
+    }
+    $parked = Join-Path $dir $parkedName
+    try {
+        Move-Item -Path $Source -Destination $Target
+    } catch {
+        Move-Item -Force -Path $parked -Destination $Target -ErrorAction SilentlyContinue
+        throw
+    }
+    Remove-Item -Force -Path $parked -ErrorAction SilentlyContinue
+}
+
 Write-Host ""
 Write-MutedN "Installing $app "
 Write-MutedN "version: "
 Write-Host $specificVersion
 
-# --- download + extract ---
+# --- download + verify + extract ---
 $tmpDir = Join-Path ([System.IO.Path]::GetTempPath()) "prioricode_install_$([guid]::NewGuid().ToString('N'))"
 New-Item -ItemType Directory -Force -Path $tmpDir | Out-Null
 try {
     $archive = Join-Path $tmpDir $filename
-    $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
-    if ($curl) {
-        & $curl.Source -sSL --fail -o $archive $url
-        if ($LASTEXITCODE -ne 0) { throw "download failed with exit code $LASTEXITCODE" }
+    Get-RemoteFile -Url $url -Out $archive
+
+    # Verify against the release's SHA256SUMS.txt when one is published. A
+    # missing entry is fatal (tampered/partial release); a missing sums file
+    # only happens on pre-checksum releases, so warn and continue.
+    $sumsPath = Join-Path $tmpDir "SHA256SUMS.txt"
+    $sumsAvailable = $true
+    try {
+        Get-RemoteFile -Url "https://github.com/$repo/releases/download/$tag/SHA256SUMS.txt" -Out $sumsPath
+    } catch {
+        $sumsAvailable = $false
+    }
+    if ($sumsAvailable) {
+        $line = Get-Content $sumsPath | Where-Object { (($_ -split "\s+")[-1]) -eq $filename } | Select-Object -First 1
+        if (-not $line) {
+            Write-Host "Error: SHA256SUMS.txt for $tag does not list $filename — refusing to install it." -ForegroundColor Red
+            exit 1
+        }
+        $expected = ($line -split "\s+")[0]
+        $actual = (Get-FileHash -Algorithm SHA256 -Path $archive).Hash.ToLower()
+        if ($actual -ne $expected.ToLower()) {
+            Write-Host "Error: checksum mismatch for $filename (expected $expected, got $actual) — download is corrupt." -ForegroundColor Red
+            exit 1
+        }
+        Write-Muted "Checksum verified for $filename."
     } else {
-        Invoke-WebRequest -Uri $url -OutFile $archive -UseBasicParsing
+        Write-Muted "No SHA256SUMS.txt published for $tag; skipping integrity check."
     }
 
     Expand-Archive -Path $archive -DestinationPath $tmpDir -Force
@@ -121,7 +213,14 @@ try {
         Write-Host "Error: archive did not contain $app.exe" -ForegroundColor Red
         exit 1
     }
-    Move-Item -Force -Path $binary -Destination (Join-Path $installDir "$app.exe")
+    $final = Join-Path $installDir "$app.exe"
+    try {
+        Install-Executable -Source $binary -Target $final
+    } catch {
+        Write-Host "Error: cannot replace $final : $($_.Exception.Message)" -ForegroundColor Red
+        Write-Muted "Close any running PrioriCode terminals, then run this installer again."
+        exit 1
+    }
 } finally {
     Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
 }
