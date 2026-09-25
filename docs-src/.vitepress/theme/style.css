@@ -1,0 +1,50 @@
+/* PrioriCode brand tokens for the VitePress theme — mirrors the landing page
+   (gold #F9B110 on charcoal, JetBrains Mono everywhere). */
+
+:root {
+  --vp-font-family-base: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --vp-font-family-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --vp-c-brand-1: #9a6d00;
+  --vp-c-brand-2: #b57a00;
+  --vp-c-brand-3: #f9b110;
+  --vp-c-brand-soft: rgba(249, 177, 16, 0.14);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(100deg, #f9b110 20%, #b57a00 90%);
+  --vp-home-hero-image-background-image: linear-gradient(135deg, rgba(249, 177, 16, 0.35), transparent 60%);
+  --vp-home-hero-image-filter: blur(48px);
+}
+
+.dark {
+  --vp-c-brand-1: #f9b110;
+  --vp-c-brand-2: #ffc94a;
+  --vp-c-brand-3: #b57a00;
+  --vp-c-brand-soft: rgba(249, 177, 16, 0.16);
+
+  --vp-home-hero-name-background: linear-gradient(100deg, #f9b110 20%, #f6f5f0 90%);
+
+  --vp-c-bg: #1a1917;
+  --vp-c-bg-alt: #232220;
+  --vp-c-bg-soft: #232220;
+  --vp-c-bg-elv: #2d2c2c;
+  --vp-c-default-soft: #2d2c2c;
+}
+
+/* code blocks sit on the deep background like the landing terminal */
+.dark .vp-code,
+.dark .vp-doc div[class*="language-"] {
+  background-color: #131211;
+}
+
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3 {
+  letter-spacing: -0.01em;
+}
+
+.VPNav,
+.VPMenu,
+.VPLocalNav {
+  backdrop-filter: blur(12px);
+}

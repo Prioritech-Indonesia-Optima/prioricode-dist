@@ -1,5 +1,5 @@
 {
   "name": "prioricode-dist-site",
   "private": true,
-  "workspaces": ["landing"]
+  "workspaces": ["landing", "docs-src"]
 }
