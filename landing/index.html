@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PrioriCode — The open source AI coding agent</title>
+    <meta
+      name="description"
+      content="PrioriCode is the open source AI coding agent by Prioritech. One command installs it into your terminal — it reads your codebase, runs your tools, and ships your code. curl -fsSL https://code.prioritech.co.id/install | bash"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://code.prioritech.co.id/" />
+    <meta property="og:title" content="PrioriCode — The open source AI coding agent" />
+    <meta
+      property="og:description"
+      content="The open source AI coding agent by Prioritech. Terminal-native, model-agnostic, built in Jakarta."
+    />
+    <meta property="og:image" content="https://code.prioritech.co.id/brand/prioritech-mark.png" />
+    <meta name="theme-color" content="#1a1917" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="canonical" href="https://code.prioritech.co.id/" />
+    <link rel="icon" type="image/svg+xml" href="/brand/favicon.svg" />
+    <link rel="apple-touch-icon" href="/brand/prioritech-mark.png" />
+    <script>
+      // Restore the saved theme before first paint (default is dark).
+      try {
+        const saved = localStorage.getItem("prioricode-theme")
+        if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      PrioriCode is the open source AI coding agent by Prioritech. Install it with
+      <code>curl -fsSL https://code.prioritech.co.id/install | bash</code> — docs at
+      <a href="/docs/">/docs/</a>, source at
+      <a href="https://github.com/Prioritech-Indonesia-Optima/prioricode">GitHub</a>.
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

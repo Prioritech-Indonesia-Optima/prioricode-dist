@@ -1,0 +1,400 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------- tokens -- */
+:root,
+[data-theme="dark"] {
+  --bg: #1a1917;
+  --bg-deep: #131211;
+  --surface: #232220;
+  --surface-raised: #2d2c2c;
+  --line: rgba(246, 245, 240, 0.12);
+  --line-strong: rgba(246, 245, 240, 0.22);
+  --ink: #f6f5f0;
+  --ink-muted: #b3b0a2;
+  --ink-faint: #8f8c80;
+  --gold: #f9b110;
+  --gold-bright: #ffc94a;
+  --gold-ink: #14130f;
+  --gold-soft: rgba(249, 177, 16, 0.12);
+  --logo-p: #faf9f6;
+  --logo-amber: #f9b110;
+  --glow: rgba(249, 177, 16, 0.28);
+}
+
+[data-theme="light"] {
+  --bg: #faf9f6;
+  --bg-deep: #f1efe7;
+  --surface: #ffffff;
+  --surface-raised: #f3f1ea;
+  --line: rgba(35, 34, 32, 0.14);
+  --line-strong: rgba(35, 34, 32, 0.26);
+  --ink: #232220;
+  --ink-muted: #5c594e;
+  --ink-faint: #6e6a5c;
+  --gold: #9a6d00;
+  --gold-bright: #7c5800;
+  --gold-ink: #faf9f6;
+  --gold-soft: rgba(154, 109, 0, 0.1);
+  --logo-p: #2d2c2c;
+  --logo-amber: #f9b110;
+  --glow: rgba(249, 177, 16, 0.35);
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+section[id] {
+  scroll-margin-top: 5rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ------------------------------------------------------------- backdrop -- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(58rem 36rem at 82% -12%, var(--gold-soft), transparent 62%),
+    radial-gradient(46rem 32rem at -8% 108%, var(--gold-soft), transparent 60%);
+}
+.comet {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+}
+.comet .trail {
+  fill: none;
+  stroke: url(#cometGrad);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: comet-draw 2.4s cubic-bezier(0.3, 0.6, 0.2, 1) 0.3s forwards;
+}
+.comet .spark {
+  fill: var(--gold-bright);
+  opacity: 0;
+  animation: comet-spark 0.5s ease-out 2.5s forwards;
+}
+@keyframes comet-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes comet-spark {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+}
+
+/* ---------------------------------------------------------------- header -- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+
+/* --------------------------------------------------------- wordmark hero -- */
+.wordmark {
+  display: block;
+  font-family: inherit;
+  font-weight: 400;
+  font-size: clamp(8px, 2.1vw, 17px);
+  line-height: 1.05;
+  margin: 0 auto;
+  padding: 0.5rem 0 0;
+  white-space: pre;
+  overflow-x: auto;
+  max-width: 100%;
+  background: linear-gradient(100deg, var(--gold) 0%, var(--gold-bright) 32%, var(--ink) 68%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 22px var(--glow));
+  animation: wordmark-reveal 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s both;
+}
+@keyframes wordmark-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* grainy ascii tones (mirrors the TUI character classes) */
+.ascii {
+  font-size: clamp(7px, 1.15vw, 11px);
+  line-height: 1.15;
+  white-space: pre;
+  margin: 0;
+}
+.ascii .c-light {
+  color: var(--ink-faint);
+}
+.ascii .c-base {
+  color: var(--ink);
+}
+.ascii .c-accent {
+  color: var(--gold);
+}
+.ascii .c-space {
+  color: transparent;
+}
+
+/* -------------------------------------------------------------- terminal -- */
+.term {
+  background: var(--bg-deep);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 24px 60px -24px rgba(0, 0, 0, 0.55),
+    0 0 0 1px color-mix(in srgb, var(--gold) 6%, transparent);
+}
+.term-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 60%, var(--bg-deep));
+}
+.term-bar .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+.term-body {
+  padding: 1.1rem 1.15rem 1.25rem;
+  font-size: 0.78rem;
+  line-height: 1.9;
+  overflow-x: auto;
+}
+.t-prompt {
+  color: var(--gold);
+}
+.t-dim {
+  color: var(--ink-faint);
+}
+.t-ok {
+  color: #7ec87e;
+}
+[data-theme="light"] .t-ok {
+  color: #3d7a3d;
+}
+
+/* ---------------------------------------------------------------- bento -- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition:
+    border-color 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+.card:hover {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--line));
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.5);
+}
+.card .icon {
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+.card .icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* ------------------------------------------------------------------- faq -- */
+details.faq {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+details.faq summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.95rem 1.1rem;
+  font-size: 0.85rem;
+}
+details.faq summary::-webkit-details-marker {
+  display: none;
+}
+details.faq summary .chev {
+  flex-shrink: 0;
+  transition: transform 200ms ease;
+  color: var(--ink-faint);
+}
+details.faq[open] summary .chev {
+  transform: rotate(45deg);
+  color: var(--gold);
+}
+details.faq .faq-body {
+  padding: 0 1.1rem 1rem;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.75;
+  animation: faq-open 220ms ease-out both;
+}
+details.faq .faq-body a {
+  color: var(--gold);
+}
+@keyframes faq-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------- buttons -- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.6rem 1.15rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.82rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+.btn:hover {
+  border-color: color-mix(in srgb, var(--gold) 60%, var(--line));
+  background: var(--surface-raised);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn.primary {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--gold-ink);
+  font-weight: 700;
+}
+[data-theme="light"] .btn.primary {
+  background: #f9b110;
+  color: #14130f;
+}
+.btn.primary:hover {
+  background: var(--gold-bright);
+  border-color: var(--gold-bright);
+}
+[data-theme="light"] .btn.primary:hover {
+  background: #ffc94a;
+}
+
+a.brandlink,
+a.navlink {
+  color: var(--ink);
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+a.navlink:hover {
+  color: var(--gold);
+}
+
+/* ------------------------------------------------------------ reduced  -- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .wordmark {
+    animation: none;
+    clip-path: none;
+  }
+  .comet .trail {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .comet .spark {
+    animation: none;
+    opacity: 0.9;
+  }
+  .card:hover {
+    transform: none;
+  }
+  details.faq .faq-body {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
