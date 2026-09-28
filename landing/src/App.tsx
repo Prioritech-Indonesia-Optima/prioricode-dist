@@ -3,6 +3,8 @@ import { motion, useReducedMotion } from "motion/react"
 import { ascii, Mark, tone } from "./brand"
 import { wordmark } from "./wordmark"
 import { Starfield } from "./Starfield"
+import blackLockup from "../../black-logo/Asset 16.png"
+import whiteLockup from "../../white-logo/Asset 10.png"
 
 const GITHUB = "https://github.com/Prioritech-Indonesia-Optima/prioricode"
 const DOCS = "/docs/"
@@ -614,6 +616,39 @@ export function App() {
               <a className="btn" href={`${DOCS}quickstart.html`}>
                 quickstart
               </a>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ---------------------------------------------------------- brand */}
+        <section className="mx-auto max-w-6xl px-5 py-14" aria-label="Official brand mark">
+          <motion.div {...fade()}>
+            <p className="kicker text-center mb-6">the official mark</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <motion.figure {...fade(0.06)} className="card p-6">
+                <img
+                  src={blackLockup}
+                  alt="Prioritech Indonesia Optima — official black logo on a light background"
+                  className="mx-auto max-h-28 w-auto max-w-full"
+                  loading="lazy"
+                />
+                <figcaption className="mt-4 text-center text-[0.72rem] text-[var(--ink-faint)]">
+                  black · on light
+                </figcaption>
+              </motion.figure>
+              <motion.figure {...fade(0.12)} className="card p-6">
+                <div className="rounded-[10px] bg-[var(--bg-deep)] p-4">
+                  <img
+                    src={whiteLockup}
+                    alt="Prioritech Indonesia Optima — official white logo on a dark background"
+                    className="mx-auto max-h-24 w-auto max-w-full"
+                    loading="lazy"
+                  />
+                </div>
+                <figcaption className="mt-4 text-center text-[0.72rem] text-[var(--ink-faint)]">
+                  white · on dark
+                </figcaption>
+              </motion.figure>
             </div>
           </motion.div>
         </section>
