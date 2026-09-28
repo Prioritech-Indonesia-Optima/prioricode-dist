@@ -22,6 +22,38 @@ function useTheme() {
   return [theme, () => setTheme((t) => (t === "dark" ? "light" : "dark"))] as const
 }
 
+function ScrollProgress() {
+  const barRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    let raf = 0
+    const update = () => {
+      raf = 0
+      const el = barRef.current
+      if (!el) return
+      const doc = document.documentElement
+      const max = doc.scrollHeight - doc.clientHeight
+      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
+      el.style.transform = `scaleX(${p})`
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update)
+    }
+    update()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onScroll)
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
+  return (
+    <div className="scroll-progress" aria-hidden="true">
+      <div ref={barRef} />
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------- brand art -- */
 
 function AsciiLogo() {
@@ -424,6 +456,8 @@ export function App() {
     <>
       <h1 className="sr-only">PrioriCode — the open source AI coding agent by Prioritech</h1>
 
+      <ScrollProgress />
+
       <div className="backdrop">
         <Starfield />
       </div>
@@ -476,8 +510,11 @@ export function App() {
 
       <main>
         {/* ------------------------------------------------------------ hero */}
-        <section className="mx-auto max-w-6xl px-5 pt-10 pb-10 sm:pt-14">
-          <Wordmark reduced={reduced} />
+        <section className="relative mx-auto flex min-h-[calc(100vh-56px)] max-w-6xl flex-col justify-center px-5 py-10 sm:py-14">
+          <div className="relative">
+            <div className="hero-glow" aria-hidden="true" />
+            <Wordmark reduced={reduced} />
+          </div>
           <div className="mt-10 grid items-start gap-10 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="min-w-0">
               <p className="kicker">open source · jakarta · progress. precision. priority.</p>

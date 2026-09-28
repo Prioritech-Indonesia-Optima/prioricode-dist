@@ -84,7 +84,7 @@ export function Starfield() {
       canvas.style.width = `${w}px`
       canvas.style.height = `${h}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      const count = Math.min(180, Math.max(60, Math.floor((w * h) / 11000)))
+      const count = Math.min(260, Math.max(90, Math.floor((w * h) / 6500)))
       stars = Array.from({ length: count }, () => {
         const depth = Math.random()
         return {
@@ -103,17 +103,17 @@ export function Starfield() {
       streakCount += 1
       if (hero) {
         // the brand vector: rising to the upper-left, long arcing tail
-        const speed = rand(240, 320)
+        const speed = rand(260, 360)
         const ang = Math.PI + rand(0.35, 0.55) // up-left
         return {
           x: rand(w * 0.55, w * 1.1),
           y: rand(h * 0.55, h * 1.15),
           vx: Math.cos(ang) * speed,
           vy: Math.sin(ang) * speed,
-          size: rand(9, 13),
+          size: rand(15, 22),
           hero: true,
           age: 0,
-          ttl: rand(3.4, 4.6),
+          ttl: rand(4.2, 5.6),
           trail: [],
           curve: rand(0.16, 0.3),
         }
@@ -169,7 +169,7 @@ export function Starfield() {
       ctx.globalAlpha = fade
       if (st.hero) {
         ctx.shadowColor = GOLD
-        ctx.shadowBlur = 26
+        ctx.shadowBlur = 42
       }
       ctx.save()
       ctx.translate(st.x, st.y)
@@ -189,11 +189,11 @@ export function Starfield() {
       ctx.clearRect(0, 0, w, h)
       drawStars()
 
-      // rare events — punctuation, not confetti
+      // shooting stars — punctuation, not confetti (kept lively, not constant)
       if (t * 1000 > nextStreakAt) {
-        const hero = streakCount % 5 === 4
+        const hero = streakCount % 4 === 3
         streaks.push(spawnStreak(hero))
-        nextStreakAt = t * 1000 + (hero ? rand(7000, 11000) : rand(2600, 5200))
+        nextStreakAt = t * 1000 + (hero ? rand(5200, 8200) : rand(1800, 3400))
       }
       // slow ambient drift toward the upper-left, like the sky turning
       for (const s of stars) {
@@ -216,7 +216,7 @@ export function Starfield() {
         st.x += st.vx * dt
         st.y += st.vy * dt
         st.trail.push({ x: st.x, y: st.y })
-        const max = st.hero ? 90 : 34
+        const max = st.hero ? 140 : 44
         if (st.trail.length > max) st.trail.shift()
         if (st.hero && Math.random() < 0.7) {
           sparks.push({

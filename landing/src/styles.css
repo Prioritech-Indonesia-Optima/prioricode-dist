@@ -59,6 +59,25 @@ body {
     "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* scroll progress — a thin gold line that fills as you read (bible: ScrollProgress) */
+.scroll-progress {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  z-index: 60;
+  pointer-events: none;
+}
+.scroll-progress > div {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  will-change: transform;
 }
 
 ::selection {
@@ -144,6 +163,22 @@ section[id] {
 }
 
 /* --------------------------------------------------------- wordmark hero -- */
+/* soft radial glow behind the wordmark — a slow, gentle pulse (not a bounce). */
+.hero-glow {
+  position: absolute;
+  inset: -18% 8%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--glow), transparent 72%);
+  filter: blur(30px);
+  pointer-events: none;
+  animation: hero-glow-pulse 5.5s ease-in-out infinite;
+}
+@keyframes hero-glow-pulse {
+  50% {
+    opacity: 0.55;
+    transform: scale(1.06);
+  }
+}
 /* the color gradient doubles as the glint: it sweeps across the glyphs once,
    mirroring the TUI home screen (reveal once, glint once, then stillness). */
 .wordmark {
@@ -465,6 +500,10 @@ a.navlink:hover {
     animation: none;
     clip-path: none;
     background-position: 0% 0;
+  }
+  .hero-glow {
+    animation: none;
+    opacity: 0.5;
   }
   .ticker-track {
     animation: none;
