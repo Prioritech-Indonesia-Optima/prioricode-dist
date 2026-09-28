@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { motion, useReducedMotion } from "motion/react"
-import { ascii, Mark, tone } from "./brand"
+import { ascii, tone } from "./brand"
 import { wordmark } from "./wordmark"
 import { Starfield } from "./Starfield"
+import markBlack from "../../brand/mark-black.png"
+import markWhite from "../../brand/mark-white.png"
 import blackLockup from "../../black-logo/Asset 16.png"
 import whiteLockup from "../../white-logo/Asset 10.png"
 
@@ -208,10 +210,10 @@ function LiveTerminal({ reduced }: { reduced: boolean }) {
   )
 }
 
-/* --------------------------------------------------------------- ticker -- */
+/* ----------------------------------------------------------- fact strip -- */
+/* Static, not a looping marquee — "motion is punctuation, not decoration". */
 
-const TICKER = [
-  "v0.1.9 shipped",
+const FACTS = [
   "terminal-native",
   "build ⇄ plan agents",
   "cross-session coordination",
@@ -231,18 +233,15 @@ function StarSep() {
   )
 }
 
-function Ticker() {
-  const items = [...TICKER, ...TICKER]
+function Facts() {
   return (
-    <div className="ticker" aria-hidden="true">
-      <div className="ticker-track">
-        {items.map((item, i) => (
-          <span className="ticker-item" key={i}>
-            <StarSep />
-            {item}
-          </span>
-        ))}
-      </div>
+    <div className="facts" aria-label="Project facts">
+      {FACTS.map((item) => (
+        <span className="fact" key={item}>
+          <StarSep />
+          {item}
+        </span>
+      ))}
     </div>
   )
 }
@@ -300,7 +299,8 @@ function Install() {
         </button>
       </div>
       <p className="mt-2 text-[0.72rem] text-[var(--ink-faint)]">
-        installs the latest release — x64 & arm. pin a version with <code className="text-[var(--gold)]">-- --version X.Y.Z</code>.
+        installs the latest release — x64 & arm. pin a version with{" "}
+        <code className="text-[var(--gold)]">bash -s -- --version X.Y.Z</code>.
       </p>
     </div>
   )
@@ -326,68 +326,40 @@ function Version() {
 }
 
 /* ------------------------------------------------------------- features -- */
+/* Per AGENTS.md identity: features are SHOWN OPERATING, never icon-cards.
+   Each capability is a dry line plus the real artifact — a command, a key, a
+   config line, a coordination log. Terminal material, not marketing. */
 
-const FEATURES: { title: string; body: string; icon: ReactNode }[] = [
+const PROOFS: { title: string; body: string; art: string[] }[] = [
   {
     title: "lives in your shell",
-    body: "No IDE to open, no tab to lose. Type `prioricode` anywhere you already work — macOS, Linux, Windows, x64 and ARM.",
-    icon: (
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="1.5" y="2.5" width="13" height="11" rx="2" />
-        <path d="M4 6l2.5 2L4 10M8.5 10.5H12" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    body: "No IDE to open, no tab to lose. It runs where you already work — macOS, Linux, Windows, x64 and ARM.",
+    art: ["~/code $ prioricode", "build agent · tab for plan · /help"],
   },
   {
     title: "two agents, one Tab",
-    body: "build ships it. plan reads the room first. flip mid-thought with Tab — no mode anxiety, no restart.",
-    icon: (
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M2 5.5h9l-2.2-2.2M14 10.5H5l2.2 2.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    body: "build ships it. plan reads the room first. flip mid-thought — no mode anxiety, no restart.",
+    art: ["[Tab]  build ⇄ plan", "plan: read-only until you say go"],
   },
   {
     title: "a room full of agents",
-    body: "Run several sessions on one repo. They announce themselves, claim files, and pass notes through a durable channel — nobody stomps on anyone's diff.",
-    icon: (
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <circle cx="3.5" cy="3.5" r="1.7" />
-        <circle cx="12.5" cy="3.5" r="1.7" />
-        <circle cx="8" cy="12.5" r="1.7" />
-        <path d="M4.6 4.9 7 10.6M11.4 4.9 9 10.6M5.2 3.5h5.6" strokeLinecap="round" />
-      </svg>
-    ),
+    body: "Several sessions, one repo. They announce themselves, claim files, and pass notes — nobody stomps on a diff.",
+    art: ["ses_a12f  claimed  src/auth.ts", "ses_b3e7  waiting   → not blocked"],
   },
   {
     title: "bring your own brain",
-    body: "Anthropic, OpenAI, Google — or the 7B humming on your desk. Providers and models switch per session. Your keys, your context.",
-    icon: (
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <circle cx="8" cy="8" r="6.5" />
-        <path d="M1.5 8h13M8 1.5c1.8 2 2.7 4.2 2.7 6.5S9.8 12.5 8 14.5C6.2 12.5 5.3 10.3 5.3 8 5.3 5.7 6.2 3.5 8 1.5Z" />
-      </svg>
-    ),
+    body: "Anthropic, OpenAI, Google, or the 7B humming on your desk. Providers and models switch per session.",
+    art: ["model = anthropic/claude-opus-4-5", "your keys · your context · no lock-in"],
   },
   {
     title: "nothing hidden",
-    body: "The agent, the tools, the context engine — all readable, all forkable. Audit the last prompt if you want. We'd like you to.",
-    icon: (
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M8 1.5 2 4.5v4c0 3 2.5 5.3 6 6 3.5-.7 6-3 6-6v-4L8 1.5Z" strokeLinejoin="round" />
-        <path d="M5.5 8 7.2 9.7 10.8 6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    body: "The agent, the tools, the context engine — all readable, all forkable. Audit the last prompt if you want.",
+    art: ["git clone github.com/.../prioricode", "MIT-style · yours to read and ship"],
   },
   {
     title: "progress. precision. priority.",
-    body: "Built by Prioritech in Jakarta and shipped daily, in the open. The star in the logo isn't decoration — it's the whole idea.",
-    icon: (
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M8 14.5s5.5-4.6 5.5-8A5.5 5.5 0 0 0 2.5 6.5c0 3.4 5.5 8 5.5 8Z" strokeLinejoin="round" />
-        <circle cx="8" cy="6.5" r="2" />
-      </svg>
-    ),
+    body: "Built by Prioritech in Jakarta, shipped daily, in the open. The star in the mark isn't decoration.",
+    art: ["// today's release is already out", "// tomorrow's is compiling"],
   },
 ]
 
@@ -467,7 +439,12 @@ export function App() {
       <header className="site-header">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
           <a className="brandlink flex items-center gap-2.5 font-bold tracking-tight" href="/">
-            <Mark className="h-6 w-6" />
+            <img
+              src={theme === "dark" ? markWhite : markBlack}
+              alt=""
+              aria-hidden="true"
+              className="h-7 w-7 shrink-0"
+            />
             <span>
               Priori<em className="text-[var(--gold)] not-italic font-extrabold">Code</em>
             </span>
@@ -567,7 +544,7 @@ export function App() {
         </section>
 
         {/* ---------------------------------------------------------- ticker */}
-        <Ticker />
+        <Facts />
 
         {/* -------------------------------------------------------- session */}
         <section className="mx-auto max-w-6xl px-5 py-14" aria-label="PrioriCode in action">
@@ -578,19 +555,27 @@ export function App() {
         </section>
 
         {/* -------------------------------------------------------- features */}
-        <section id="features" className="mx-auto max-w-6xl px-5 py-14" aria-label="Features">
-          <p className="kicker text-center mb-4">why prioricode</p>
-          <motion.h2 {...fade()} className="text-center text-[clamp(1.25rem,3vw,1.7rem)] font-bold tracking-tight">
-            Everything you expect from an agent.{" "}
-            <span className="text-[var(--gold)]">Nothing you have to trust blindly.</span>
-          </motion.h2>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f, i) => (
-              <motion.div key={f.title} {...fade(0.05 * (i % 3))} className="card p-5">
-                <span className="idx">{String(i + 1).padStart(2, "0")}</span>
-                <div className="icon">{f.icon}</div>
-                <h3 className="mt-3.5 text-[0.92rem] font-bold">{f.title}</h3>
-                <p className="mt-1.5 text-[0.78rem] leading-relaxed text-[var(--ink-muted)]">{f.body}</p>
+        <section id="features" className="mx-auto max-w-6xl px-5 py-14" aria-label="What it does">
+          <motion.div {...fade()}>
+            <p className="kicker mb-4">what it does</p>
+            <h2 className="max-w-2xl text-[clamp(1.25rem,3vw,1.7rem)] font-bold tracking-tight">
+              An agent you can read, <span className="text-[var(--gold)]">not just trust.</span>
+            </h2>
+          </motion.div>
+          <div className="spec mt-8">
+            {PROOFS.map((p) => (
+              <motion.div key={p.title} {...fade()} className="spec-row">
+                <div className="spec-lead">
+                  <h3>{p.title}</h3>
+                  <p>{p.body}</p>
+                </div>
+                <div className="spec-art" aria-hidden="true">
+                  {p.art.map((line, j) => (
+                    <div key={j} className={j === 0 ? "spec-art-main" : "spec-art-dim"}>
+                      {line}
+                    </div>
+                  ))}
+                </div>
               </motion.div>
             ))}
           </div>

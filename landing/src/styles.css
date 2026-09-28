@@ -163,21 +163,16 @@ section[id] {
 }
 
 /* --------------------------------------------------------- wordmark hero -- */
-/* soft radial glow behind the wordmark — a slow, gentle pulse (not a bounce). */
+/* soft radial glow behind the wordmark — static ambient light, not a pulse
+   (identity: no pulsing elements while idle; motion is punctuation only). */
 .hero-glow {
   position: absolute;
   inset: -18% 8%;
   border-radius: 50%;
   background: radial-gradient(closest-side, var(--glow), transparent 72%);
   filter: blur(30px);
+  opacity: 0.6;
   pointer-events: none;
-  animation: hero-glow-pulse 5.5s ease-in-out infinite;
-}
-@keyframes hero-glow-pulse {
-  50% {
-    opacity: 0.55;
-    transform: scale(1.06);
-  }
 }
 /* the color gradient doubles as the glint: it sweeps across the glyphs once,
    mirroring the TUI home screen (reveal once, glint once, then stillness). */
@@ -297,41 +292,89 @@ section[id] {
   }
 }
 
-/* ---------------------------------------------------------------- ticker -- */
-.ticker {
-  overflow: hidden;
+/* ------------------------------------------------------------ fact strip -- */
+/* static row of facts — no looping marquee. wraps on small screens. */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem 0.4rem;
   border-block: 1px solid var(--line);
   background: color-mix(in srgb, var(--surface) 45%, transparent);
-  padding: 0.55rem 0;
-  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  padding: 0.7rem 1rem;
 }
-.ticker-track {
-  display: flex;
-  width: max-content;
-  gap: 0;
-  animation: ticker-run 34s linear infinite;
-}
-.ticker:hover .ticker-track {
-  animation-play-state: paused;
-}
-.ticker-item {
-  padding: 0 1.4rem;
+.fact {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   color: var(--ink-muted);
   white-space: nowrap;
 }
-.ticker-item b {
-  color: var(--gold);
-  font-weight: 500;
+
+/* ------------------------------------------------- features: spec sheet -- */
+/* a single hairline-framed panel; each row pairs a dry claim with the real
+   artifact. no icons, no 01/02/03 — features shown operating. */
+.spec {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
 }
-@keyframes ticker-run {
-  to {
-    transform: translateX(-50%);
+.spec-row {
+  display: grid;
+  gap: 0.75rem 2rem;
+  padding: 1.25rem 1.4rem;
+  border-top: 1px solid var(--line);
+  transition: background 200ms ease;
+}
+.spec-row:first-child {
+  border-top: 0;
+}
+.spec-row:hover {
+  background: color-mix(in srgb, var(--gold-soft) 60%, transparent);
+}
+@media (min-width: 640px) {
+  .spec-row {
+    grid-template-columns: 1.1fr 1fr;
+    align-items: center;
   }
 }
+.spec-lead h3 {
+  margin: 0 0 0.3rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.spec-lead p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+.spec-art {
+  font-family: inherit;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-deep);
+  padding: 0.7rem 0.9rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.spec-art-main {
+  font-size: 0.74rem;
+  color: var(--ink);
+  white-space: pre;
+}
+.spec-art-dim {
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  white-space: pre;
+}
 
-/* ---------------------------------------------------------------- bento -- */
+/* ------------------------------------------------------------------ card -- */
 .card {
   position: relative;
   background: var(--surface);
@@ -339,37 +382,11 @@ section[id] {
   border-radius: 14px;
   transition:
     border-color 200ms ease,
-    transform 200ms ease,
     box-shadow 200ms ease;
 }
 .card:hover {
   border-color: color-mix(in srgb, var(--gold) 55%, var(--line));
-  transform: translateY(-2px);
   box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.5);
-}
-.card .idx {
-  position: absolute;
-  top: 1.1rem;
-  right: 1.25rem;
-  font-size: 0.62rem;
-  color: var(--ink-faint);
-  letter-spacing: 0.08em;
-}
-.card:hover .idx {
-  color: var(--gold);
-}
-.card .icon {
-  width: 2.1rem;
-  height: 2.1rem;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  background: var(--gold-soft);
-  color: var(--gold);
-}
-.card .icon svg {
-  width: 1.15rem;
-  height: 1.15rem;
 }
 
 /* ------------------------------------------------------------------- faq -- */
@@ -502,17 +519,10 @@ a.navlink:hover {
     background-position: 0% 0;
   }
   .hero-glow {
-    animation: none;
     opacity: 0.5;
-  }
-  .ticker-track {
-    animation: none;
   }
   .caret {
     animation: none;
-  }
-  .card:hover {
-    transform: none;
   }
   details.faq .faq-body {
     animation: none;
