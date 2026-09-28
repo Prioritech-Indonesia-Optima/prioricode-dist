@@ -1,0 +1,106 @@
+---
+title: "Permissions & safety"
+description: "allow/ask/deny rules per tool and pattern, permission modes, the always-allow gotcha, external directories, and the bash sandbox."
+---
+
+Nothing destructive happens quietly. Every tool call — reads, edits, shell commands, web fetches — is evaluated against permission rules before it runs, and the outcome is `allow`, `ask`, or `deny`.
+
+:::warning
+The permission system is **guardrails, not isolation**. It asks before it touches, but it is not a security boundary — a determined prompt injection is still a prompt injection. For true containment, run PrioriCode in a container or VM, and read the [threat model in SECURITY.md](https://github.com/Prioritech-Indonesia-Optima/prioricode/blob/main/SECURITY.md).
+:::
+
+## The grammar
+
+Each permission corresponds to a tool — `read`, `edit`, `bash`, `glob`, `grep`, `list`, `task`, `webfetch`, `websearch`, `external_directory`, `todowrite`, `question`, `lsp`, `skill`, `doom_loop`, plus MCP tool names — and each one resolves to an action:
+
+| Action | Meaning |
+| --- | --- |
+| `allow` | Runs without asking. |
+| `ask` | You approve or reject — per call. |
+| `deny` | Refused; the model is told. A tool denied outright (`"*": "deny"`) disappears from the agent's toolset entirely. |
+
+Rules are pattern-based: the tool takes the *thing* it wants to touch (a file path, a command string, a URL) and matches it against glob patterns. **Last match wins**, so put your exceptions after your generalities. When no rule matches, the default is `ask`.
+
+In `prioricode.json` (see [config files](../configure/files.md)):
+
+```jsonc
+{
+  "permission": {
+    "edit": "allow",                    // shorthand: every edit, always
+    "read": {
+      "*.env": "ask",                   // .env is sensitive — ask
+      "*.env.example": "allow",
+    },
+    "bash": {
+      "bun run *": "allow",             // tests are fine
+      "git push*": "ask",
+      "rm *": "deny",
+    },
+  },
+}
+```
+
+Patterns expand `~/` and `$HOME`. One-off overrides: the `tools` config map (`{ "webfetch": false }` hides the tool) or the `PRIORICODE_PERMISSION` environment variable (a JSON ruleset merged over your file config).
+
+## What the defaults already know
+
+Before your config is layered in, every agent starts from a baseline:
+
+- **`.env` files ask.** Reading `*.env` needs your explicit yes; `*.env.example` is free. Secrets shouldn't leak into context by accident.
+- **Outside your project asks.** Reads or writes aimed beyond the project directory trip the `external_directory` rule with a `<dir>/*` pattern. A few work areas are pre-allowed (PrioriCode's own temp/truncation dirs, skill directories, configured [references](../configure/files.md)); the shell is the same story — `bash` parses your command with tree-sitter and asks before letting `rm`/`mv`/`cp` reach outside the workspace.
+- **Loops ask.** Three identical tool calls in a row triggers a `doom_loop` permission — "are you sure, again?" is sometimes all it takes to break a rut.
+- **`question`, `plan_enter`, `plan_exit`** default to deny and are enabled per agent ([agents](agents.md)).
+
+## In the moment: the permission panel
+
+When something asks, the session view shows the actual object: a syntax-highlighted diff for edits, the full command string for bash, the URL for fetches. Three choices:
+
+1. **Allow once** — this call only.
+2. **Allow always** — a confirmation stage lists the rule it's adding (e.g. `git diff*`), and it holds *until PrioriCode is restarted*. Approve accordingly.
+3. **Reject** — and for subagent requests, rejection opens a text field: tell it what to do differently, and your words become the correction it receives.
+
+`escape` rejects, `return` confirms, arrow keys (or `h`/`l`) select, and `ctrl+f` toggles fullscreen for the big diffs. Pending asks stack up in the footer as "N Permissions".
+
+## Permission modes (per session)
+
+`/permission` (or the palette's "Permission mode") sets the whole session's posture:
+
+| Mode | Behavior |
+| --- | --- |
+| `default` | Follow agent + project rules. The normal life. |
+| `ask-first` | Edits and bash always confirm, whatever config says. Trust but verify. |
+| `always-allow` | Skips confirmations — **except destructive bash commands**, which still ask. Yes, `rm -rf` keeps its manners. |
+
+`prioricode --auto` sets `always-allow` at launch (aliases `--yolo` and `--dangerously-skip-permissions` do the same). It's honest about what it does: the CLI help literally calls it dangerous. Use it for CI and one-shot batch work, not for "I don't want to read".
+
+:::tip
+Want less prompting without going full-send? Stay in `default` mode and give the repetitive things an explicit allow pattern —
+  `"bash": { "bun run *": "allow" }` keeps approvals narrow, named, and reviewable. A session mode is a blunt object; patterns are the scalpel.
+:::
+
+## Sandboxing bash
+
+On macOS and Linux, `bashSandbox` wraps shell commands in an OS sandbox — macOS seatbelt (`sandbox-exec`), Linux bubblewrap (`bwrap`):
+
+```jsonc
+{
+  "bashSandbox": {
+    "mode": "best-effort",          // "off" (default) | "best-effort" | "require"
+    "network": "deny",              // deny network to commands by default
+    "writablePaths": ["tmp/"]       // extra paths commands may write
+  }
+}
+```
+
+The filesystem becomes read-everywhere-but-write-here: your project, worktree, git dir, and package caches stay writable; everything else is read-only. `require` fails commands when the sandbox can't start (no silent fallbacks); `best-effort` falls back and says so. Windows doesn't support it, and PowerShell/cmd commands are never sandboxed. A nonzero exit inside the sandbox comes with a hint pointing at `writablePaths`/`network` — sandbox denials wear the same face as real errors.
+
+## Non-interactive reality
+
+In `prioricode run` (no TUI to ask), anything that would `ask` is **rejected** unless `--auto`. `question`/`plan_enter`/`plan_exit` are denied up front. If a script needs room to move, grant it in config before you launch it — CI should be boring on purpose. See [headless](headless.md).
+
+## Related
+
+- [Agents](agents.md) — Per-agent permission profiles.
+  - [Config reference](../reference/config.md) — `permission`, `bashSandbox`, `tools`, and every key.
+  - [Hooks](../extending/hooks.md) — Run your own gatekeeper script on every tool call.
+  - [Troubleshooting](../support/troubleshooting.md) — When a permission won't stick.

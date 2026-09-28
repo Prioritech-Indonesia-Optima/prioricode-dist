@@ -1,4 +1,5 @@
 import { defineConfig } from "vitepress"
+import { banner, sidebar } from "./sidebar.generated.mjs"
 
 // The docs are served at https://code.prioritech.co.id/docs/ — `base` and
 // `outDir` must stay in lockstep (AGENTS.md runbook).
@@ -38,19 +39,8 @@ export default defineConfig({
       { text: "SDK", link: "/sdk" },
       { text: "← Site", link: "https://code.prioritech.co.id/" },
     ],
-    sidebar: [
-      {
-        text: "Getting started",
-        items: [
-          { text: "What is PrioriCode?", link: "/" },
-          { text: "Quickstart", link: "/quickstart" },
-        ],
-      },
-      {
-        text: "Developers",
-        items: [{ text: "TypeScript SDK", link: "/sdk" }],
-      },
-    ],
+    sidebar,
+    banner,
     socialLinks: [{ icon: "github", link: "https://github.com/Prioritech-Indonesia-Optima/prioricode" }],
     search: { provider: "local", options: { translations: { button: { buttonText: "Search docs" } } } },
     footer: {

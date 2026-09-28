@@ -1,0 +1,60 @@
+---
+title: "Formatters"
+description: "Auto-formatting after agent edits — built-in support for prettier, biome, ruff, gofmt, clang-format, and more, with custom formatter commands."
+---
+
+Agents write code fast; formatters keep it boring. After every `edit`/`write`/`apply_patch`, PrioriCode runs the formatter that matches the file — the same one your project would use — so agent-written code is indistinguishable at the diff level. That matters: a formatting churn storm in review is a trust leak.
+
+## Built-ins
+
+Each formatter activates on its own detection rule — the general shape is "the tool exists for this project." (Prettier, for instance, requires a `prettier` dependency in a `package.json` between cwd and worktree *and* a resolvable binary.):
+
+| Formatter | Extensions |
+| --- | --- |
+| prettier | JS/TS/JSON/CSS/MD/HTML/YAML and friends |
+| biome | same JS/TS/web/config spread as prettier |
+| oxfmt | JS/TS variants (experimental — enable with `PRIORICODE_EXPERIMENTAL_OXFMT`) |
+| gofmt | `.go` |
+| ruff / uv | `.py`, `.pyi` |
+| mix | `.ex`, `.heex` + Elixir family |
+| clang-format | C/C++ family |
+| ktlint | `.kt`, `.kts` |
+| rubocop / standardrb / htmlbeautifier | Ruby + ERB family |
+| zig, dart, ocamlformat, terraform, latexindent, gleam | their respective languages |
+
+No formatter installed? Nothing happens — the agent writes as the model produced, minus chaos (the prompt nudges correct style anyway). Install what your repo uses and the pipeline closes itself.
+
+## Control it
+
+```jsonc
+{
+  // off entirely
+  "formatter": false,
+
+  // or per-server: tune, disable, or extend
+  "formatter": {
+    "prettier": { "disabled": true },
+    "rustfmt": {
+      "command": ["rustfmt", "--edition", "2021"],
+      "extensions": [".rs"],
+      "environment": { "RUSTFMT_CONFIG": "/repo/rustfmt.toml" }
+    }
+  }
+}
+```
+
+Custom entries must declare `extensions` (that's how a file routes to a command); the command receives the file path and rewrites it in place. `disabled: true` silences one built-in without turning off the rest — that's the knob when prettier and biome are both installed and you have *opinions*.
+
+## Failure behavior
+
+A formatter that errors is reported in the tool result — you see *why* the shape is unchanged instead of wondering — and it never blocks the edit itself from having happened. LSP diagnostics ride along with edit/write output separately; formatter + diagnostics together mean the agent usually self-corrects style *and* type errors before you review.
+
+:::tip
+Debugging what would run: `/status` shows the loaded formatter inventory; set `"formatter": false` and flip it back on to isolate a fight between the agent and your config.
+:::
+
+## Related
+
+- [LSP](lsp.md) — Diagnostics, not cosmetics — the other half of self-correction.
+  - [Tools reference](../reference/tools.md) — What edit/write do and return.
+  - [Config reference](../reference/config.md) — The `formatter` key.
