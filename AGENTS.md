@@ -9,21 +9,33 @@ staleness; verify with cache-busting curls, not a cached browser tab.
 
 Anything that changes how a page **looks, feels, moves, or is interacted with**
 — landing page, docs theme, 404, brand artifacts, components, colors, typography,
-layout, animation, responsive behavior, accessibility — MUST use the vendored
-**UI/UX Pro Max** design skill before writing code:
+layout, animation, responsive behavior, accessibility — MUST consult the
+**UI/UX Pro Max** design bible before writing code.
 
-- Entry point: `.prioricode/skills/ui-ux-pro-max/SKILL.md`
-  (companions in `.prioricode/skills/`: `ui-styling`, `design-system`, `brand`,
-  `design`, `banner-design`, `slides`).
-- Design-system generation (new page / visual direction):
-  `python3 .prioricode/skills/ui-ux-pro-max/scripts/search.py "<intent, 2–5 terms>" --design-system`
-- Targeted concern: `... search.py "<query>" --domain <style|color|typography|ux|gsap|icons|stack>`
-- If skill docs reference `${CLAUDE_PLUGIN_ROOT}/.claude/skills/`, the vendored
-  equivalent is this repo's `.prioricode/skills/` — always invoke scripts by
-  their full path from the repo root.
-- The skill's pre-delivery checklist (contrast 4.5:1, visible focus, 44px touch
-  targets, `prefers-reduced-motion`, reflow at 375/768/1024/1440, no emoji icons,
-  `cursor-pointer` on clickables) is this repo's **definition of done** for UI.
+**The bible is the cloned repo `ui-ux-pro-max-skill/`** (cloned from
+`github.com/nextlevelbuilder/ui-ux-pro-max-skill`). It is the source of truth for
+view-layer decisions: 192 reasoning rules, 79 UI styles, 192 product palettes, 74
+font pairings, 119 UX guidelines, 105 icons, 17 GSAP presets, 25 chart types, and
+22 tech stacks.
+
+Always run the search tool by its full path from the repo root (do not assume a CWD):
+
+- **New page / system-wide visual direction** (design-system generation):
+  `python3 ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<product_type> <industry> <2–5 keywords>" --design-system`
+- **Targeted concern** (style, color, typography, UX, GSAP, icons, stack):
+  `python3 ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<query>" --domain <style|color|typography|ux|gsap|icons|chart|landing|react|web|google-fonts>`
+- **Known implementation stack**: `... search.py "<query>" --stack <react|nextjs|html-tailwind|...>`
+- **Design dials** (optional, with `--design-system`): `--variance <1-10> --motion <1-10> --density <1-10>`
+
+The vendored quick-reference skill at `.prioricode/skills/ui-ux-pro-max/SKILL.md`
+(companions: `ui-styling`, `design-system`, `brand`, `design`, `banner-design`,
+`slides`) mirrors the same data and is the fast local entry point; the cloned
+`ui-ux-pro-max-skill/` repo is the full bible to consult when the vendored copy is
+stale or you need the latest rules.
+
+The pre-delivery checklist (contrast 4.5:1, visible focus, 44px touch targets,
+`prefers-reduced-motion`, reflow at 375/768/1024/1440, no emoji icons,
+`cursor-pointer` on clickables) is this repo's **definition of done** for UI.
 
 ## Layout — source vs generated
 
@@ -40,6 +52,7 @@ layout, animation, responsive behavior, accessibility — MUST use the vendored
 | `CNAME`       | keep       | the custom domain; do not touch                                  |
 | `.nojekyll`   | keep       | stops Pages' Jekyll pass from stripping `_*` dirs the builds use |
 | `.prioricode/skills/` | vendored | third-party skill bundle (MIT) — refresh only, don't edit  |
+| `ui-ux-pro-max-skill/` | reference | the UI/UX Pro Max design **bible** (cloned, read-only) — consult for every view-layer change |
 
 ## Update runbook
 
@@ -83,6 +96,10 @@ The site's own vibe. Every frontend change must fit it:
 5. **Voice: dry, confident, commit-message short.** Imperative sentences. Indonesian pride
    ("progress. precision. priority."). Light terminal humor, zero corporate filler.
    No emoji icons (SVG only), no exclamation marks in headlines.
+6. **Features are shown operating, never as cards.** The feature showcase is the
+   scrollytelling section (`landing/src/Scrolly.tsx`): a sticky terminal device that
+   morphs state per chapter while the narrative scrolls beside it. Do not replace it
+   with icon-card grids — that's the AI-slop pattern this repo exists to avoid.
 
 ## Hard constraints
 
