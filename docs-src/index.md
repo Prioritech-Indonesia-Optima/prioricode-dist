@@ -6,7 +6,7 @@ hero:
   text: The open source AI coding agent
   tagline: Lives in your terminal, reads your codebase, runs your tools, and ships your code — one conversation at a time. Built by Prioritech in Jakarta.
   image:
-    src: /mark-light.svg
+    src: /mark-white.png
     alt: Prioritech mark
   actions:
     - theme: brand

@@ -15,7 +15,7 @@ export default defineConfig({
   editLink: undefined,
   cleanUrls: false,
   head: [
-    ["link", { rel: "icon", type: "image/svg+xml", href: "/brand/favicon.svg" }],
+    ["link", { rel: "icon", type: "image/png", href: "/brand/mark-black.png" }],
     ["meta", { name: "theme-color", content: "#1a1917" }],
     ["meta", { property: "og:type", content: "website" }],
     ["meta", { property: "og:title", content: "PrioriCode Docs" }],
@@ -31,7 +31,7 @@ export default defineConfig({
     server: { host: true },
   },
   themeConfig: {
-    logo: { light: "/mark-dark.svg", dark: "/mark-light.svg" },
+    logo: { light: "/mark-black.png", dark: "/mark-white.png" },
     siteTitle: "PrioriCode",
     nav: [
       { text: "What is PrioriCode?", link: "/" },
