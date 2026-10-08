@@ -304,14 +304,80 @@ function Install() {
   )
 }
 
-function Version() {
-  const [tag, setTag] = useState<string | null>(null)
+type ReleaseAsset = { name: string; browser_download_url: string }
+
+function useLatestRelease(): { tag: string | null; assets: ReleaseAsset[] } {
+  const [release, setRelease] = useState<{ tag: string | null; assets: ReleaseAsset[] }>({ tag: null, assets: [] })
   useEffect(() => {
     fetch(`${GITHUB.replace("github.com", "api.github.com/repos")}/releases/latest`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d?.tag_name && setTag(String(d.tag_name).replace(/^v/, "")))
+      .then((d) => {
+        if (!d?.tag_name) return
+        setRelease({
+          tag: String(d.tag_name).replace(/^v/, ""),
+          assets: Array.isArray(d.assets)
+            ? d.assets.map((a: { name: string; browser_download_url: string }) => ({
+                name: a.name,
+                browser_download_url: a.browser_download_url,
+              }))
+            : [],
+        })
+      })
       .catch(() => {})
   }, [])
+  return release
+}
+
+function detectDesktop() {
+  const ua = navigator.userAgent
+  const isMac = /macintosh|mac os x/i.test(ua)
+  const isWin = /windows/i.test(ua)
+  const isArm = /arm64|aarch64/i.test(ua)
+  return { os: isMac ? "mac" : isWin ? "win" : "linux", arch: isArm ? "arm64" : "x64" } as const
+}
+
+function pickDesktopAsset(assets: ReleaseAsset[], os: string, arch: string) {
+  const archTokens = arch === "x64" ? ["x86_64", "amd64", "x64"] : ["arm64", "aarch64"]
+  const extPref = os === "mac" ? ["dmg", "zip"] : os === "win" ? ["exe"] : ["appimage", "deb", "rpm"]
+  const matches = assets.filter((a) => {
+    const n = a.name.toLowerCase()
+    if (!n.includes("desktop")) return false
+    if (n.includes(".blockmap")) return false
+    const osOk = os === "mac" ? n.includes("mac") : n.includes(os)
+    return osOk && archTokens.some((t) => n.includes(t))
+  })
+  if (!matches.length) return null
+  matches.sort((a, b) => {
+    const rank = (name: string) => {
+      const i = extPref.findIndex((e) => name.toLowerCase().endsWith("." + e))
+      return i === -1 ? 99 : i
+    }
+    return rank(a.name) - rank(b.name)
+  })
+  return matches[0]
+}
+
+function DesktopDownload({ assets }: { assets: ReleaseAsset[] }) {
+  const det = detectDesktop()
+  const asset = pickDesktopAsset(assets, det.os, det.arch)
+  const href = asset ? asset.browser_download_url : `${GITHUB}/releases/latest`
+  return (
+    <a
+      className="btn primary"
+      href={href}
+      title={asset ? asset.name : "all platforms on github releases"}
+      target={asset ? undefined : "_blank"}
+      rel={asset ? undefined : "noreferrer"}
+    >
+      <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+        <path d="M8 1a.75.75 0 0 1 .75.75v6.44l1.97-1.97a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 1.06-1.06l1.97 1.97V1.75A.75.75 0 0 1 8 1ZM2 13.25A.75.75 0 0 1 2.75 12.5h10.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" />
+      </svg>
+      {asset ? `download · ${det.os} ${det.arch}` : "download latest"}
+    </a>
+  )
+}
+
+function Version({ tag }: { tag: string | null }) {
   if (!tag) return null
   return (
     <a
@@ -414,6 +480,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
 export function App() {
   const [theme, flip] = useTheme()
   const reduced = !!useReducedMotion()
+  const release = useLatestRelease()
   const fade = (delay = 0) =>
     reduced
       ? {}
@@ -511,12 +578,7 @@ export function App() {
                 <Install />
               </div>
               <div className="mt-6 flex flex-wrap gap-2.5">
-                <a className="btn primary" href={`${GITHUB}/releases/latest`}>
-                  <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden="true">
-                    <path d="M8 1a.75.75 0 0 1 .75.75v6.44l1.97-1.97a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 1.06-1.06l1.97 1.97V1.75A.75.75 0 0 1 8 1ZM2 13.25A.75.75 0 0 1 2.75 12.5h10.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" />
-                  </svg>
-                  download latest
-                </a>
+                <DesktopDownload assets={release.assets} />
                 <a className="btn" href={DOCS}>
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4" aria-hidden="true">
                     <path d="M2.5 2.5h4.2c1.4 0 1.8 1 1.8 2.2V13c0-1 .5-1.7 1.7-1.7h3.3V2.5H8.9" strokeLinecap="round" strokeLinejoin="round" />
@@ -648,7 +710,7 @@ export function App() {
               prioritech.co.id
             </a>
           </span>
-          <Version />
+          <Version tag={release.tag} />
         </div>
       </footer>
     </>
